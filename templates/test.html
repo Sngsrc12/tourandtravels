@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🎥 Video Manager Pro</title>
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+  <style>
+
+#thumbnailPreview,
+  #videoPreview {
+    transition: all 0.2s ease;
+  }
+
+  .form-label {
+    margin-bottom: 0.3rem;
+    font-size: 0.95rem;
+  }
+
+  .modal-content {
+    border-radius: 16px;
+  }
+
+  #updateForm label {
+    font-weight: 500;
+  }
+
+
+    body {
+      background-color: #f1f3f7;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    .dashboard-container {
+      padding: 30px;
+    }
+
+    .table-card {
+      background-color: #ffffff;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .table th {
+      background-color: #0d6efd;
+      color: white;
+      text-transform: uppercase;
+      font-size: 14px;
+      letter-spacing: 1px;
+      border: none;
+    }
+
+    .table td {
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    .thumbnail-img {
+      width: 100px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .btn-url {
+      background-color: #17a2b8;
+      color: #fff;
+    }
+
+    .btn-url:hover {
+      background-color: #138496;
+    }
+
+    .pagination {
+      justify-content: flex-end;
+    }
+
+    .modal-body ul {
+      list-style: none;
+      padding: 0;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .modal-body li {
+      background-color: #f5f5f5;
+      margin-bottom: 8px;
+      padding: 10px 15px;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+
+    .table-actions button {
+      margin-right: 6px;
+    }
+
+    .table td,
+    .table th {
+      padding: 1rem 1.2rem;
+    }
+
+    @media (max-width: 768px) {
+      .thumbnail-img {
+        width: 70px;
+      }
+
+      .table td,
+      .table th {
+        padding: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid dashboard-container">
+  <h2 class="mb-4 fw-bold text-primary">🎥 Video Manager Pro Dashboard</h2>
+  <div class="d-flex align-items-center mb-3">
+  <input type="text" id="searchInput" class="form-control" placeholder="Search for videos..." />
+    <button id="searchBtn" class="btn btn-primary me-3">🔍 Search</button>
+    <button id="clearSearchBtn" class="btn btn-secondary ms-auto">Clear</button>
+  </div>
+  <button id="deleteSelectedBtn" class="btn btn-danger d-none mb-2">
+    🗑️ Delete Selected
+  </button>
+</div>
+
+
+<div class="table-card">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAllCheckbox" /></th>
+        <th>ID</th>
+        <th>Uploader</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Thumbnail</th>
+        <th>Video URLs</th>
+        <th>Category</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="videoTable"></tbody>
+  </table>
+
+  <nav>
+    <ul class="pagination" id="pagination"></ul>
+  </nav>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content shadow-sm rounded-4">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="updateModalLabel">🎬 Update Video Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body bg-light">
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="d-none text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-3">Fetching video details...</p>
+        </div>
+
+        <!-- Update Form -->
+        <form id="updateForm" style="display:none;" enctype="multipart/form-data" class="p-3 bg-white rounded-3 shadow-sm">
+          <input type="hidden" id="id" name="id">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Uploader</label>
+              <input type="text" id="uploader" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Title</label>
+              <input type="text" id="title" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea id="description" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tags (comma separated)</label>
+              <input type="text" id="tag" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Categories (comma separated)</label>
+              <input type="text" id="category" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Location</label>
+              <input type="text" id="location" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Google Map URL</label>
+              <input type="text" id="map_url" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Opening Days</label>
+              <input type="text"
+                    id="opening_days"
+                    class="form-control"
+                    placeholder="Monday,Tuesday,Wednesday">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Opening Time</label>
+              <input type="time"
+                    id="opening_time"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Closing Time</label>
+              <input type="time"
+                    id="closing_time"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Indian Ticket</label>
+              <input type="number"
+                    id="indian_ticket"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Foreigner Ticket</label>
+              <input type="number"
+                    id="foreigner_ticket"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Child Ticket</label>
+              <input type="number"
+                    id="child_ticket"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Best Time To Visit</label>
+              <input type="text"
+                    id="best_time_to_visit"
+                    class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Official Website</label>
+              <input type="text"
+                    id="official_website"
+                    class="form-control">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Facilities</label>
+              <textarea id="facilities"
+                        class="form-control"
+                        rows="2"
+                        placeholder="Parking,Washroom,Guide"></textarea>
+            </div>
+
+
+            <!-- THUMBNAIL -->
+            <div class="col-lg-6">
+              <label class="form-label fw-semibold">Current Thumbnail</label>
+              <div class="border rounded-3 p-2 bg-white">
+                <input type="text" id="thumbnail_url" class="form-control mb-2" readonly>
+                <img id="thumbnailPreview" class="img-fluid rounded shadow-sm border" style="max-height: 250px; object-fit: cover;" alt="Thumbnail Preview">
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <label class="form-label fw-semibold">New Thumbnail (Optional)</label>
+              <input type="file" id="thumbnail" name="thumbnail" class="form-control" accept="image/*">
+            </div>
+
+            <!-- CURRENT VIDEOS PREVIEW -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Current Videos</label>
+              <div id="videoPreviewWrapper" class="mb-3 border rounded-3 p-3 bg-white"></div>
+            </div>
+
+            <!-- NEW VIDEO UPLOAD -->
+           
+              <div class="col-12">
+  <label class="form-label fw-semibold">Upload New Videos</label>
+  
+  <!-- Keep old id -->
+  <div id="videoInputsWrapper">
+    <div class="input-group mb-2">
+      <input type="file" id="video" name="video" class="form-control video-input" accept="video/*" multiple>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const mainInput = document.getElementById("video");
+  const wrapper = document.getElementById("videoInputsWrapper");
+
+  mainInput.addEventListener("change", function () {
+    wrapper.innerHTML = ""; // clear old inputs
+    const files = Array.from(this.files);
+
+    files.forEach((file, index) => {
+      const group = document.createElement("div");
+      group.className = "input-group mb-2";
+      group.innerHTML = `
+        <span class="input-group-text">Video ${index + 1}</span>
+        <input type="file" name="video" class="form-control video-input" accept="video/*">
+      `;
+
+      // clone the file into the new input
+      const input = group.querySelector("input");
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+
+      wrapper.appendChild(group);
+    });
+  });
+});
+</script>
+
+
+          </div>
+
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-success px-4 py-2">💾 Update Video</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal for video URLs -->
+<div class="modal fade" id="videoListModal" tabindex="-1" aria-labelledby="videoListModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Video URLs</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="videoUrlList"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+const session_id = localStorage.getItem("session_id");
+
+if (!session_id) {
+  alert("Session expired. Please log in again.");
+  window.location.href = "/login";  // Redirect to login page
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+}
+
+function loadVideos(page = 1) {
+  fetch(`/api/get/sundarikanya?page=${page}`)
+    .then(res => res.json())
+    .then(responseData => {
+      const videos = responseData.data;
+      const videoTable = document.getElementById('videoTable');
+      const pagination = document.getElementById('pagination');
+      videoTable.innerHTML = '';
+      pagination.innerHTML = '';
+
+      videos.forEach(video => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox" class="row-checkbox" data-id="${video.id}" /></td>
+          <td>${video.id}</td>
+          <td>${video.uploader}</td>
+          <td>${truncateText(video.title, 30)}</td>
+          <td>${truncateText(video.description, 100)}</td>
+          <td><img src="${video.thumbnail}" class="thumbnail-img" /></td>
+          <td>
+            <button class="btn btn-sm btn-url" onclick="showVideoUrls('${video.videourl}')">🔗 View URLs</button>
+          </td>
+          <td>${video.category.slice(0, 2).join(', ')}${video.category.length > 2 ? ', ...' : ''}</td>
+          <td class="table-actions">
+            <button class="btn btn-warning editBtn" data-id="${video.id}">Edit</button>
+
+            <button class="btn btn-danger w-100 deleteBtn" data-id="${video.id}">🗑️</button>
+          </td>
+        `;
+        videoTable.appendChild(tr);
+      });
+
+      totalPages = Math.ceil(responseData.total / responseData.per_page);
+      renderPagination(page);
+    });
+}
+
+
+
+
+function renderPagination(activePage) {
+  const pagination = document.getElementById('pagination');
+  for (let i = 1; i <= totalPages; i++) {
+    const li = document.createElement('li');
+    li.className = `page-item ${i === activePage ? 'active' : ''}`;
+    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+    li.onclick = function (e) {
+      e.preventDefault();
+      currentPage = i;
+      loadVideos(i);
+    };
+    pagination.appendChild(li);
+  }
+}
+
+function showVideoUrls(videoUrlsString) {
+  const urlList = videoUrlsString.split(',');
+  const ul = document.getElementById('videoUrlList');
+  ul.innerHTML = '';
+  urlList.forEach(url => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="${url.trim()}" target="_blank">${url.trim()}</a>`;
+    ul.appendChild(li);
+  });
+
+  const modal = new bootstrap.Modal(document.getElementById('videoListModal'));
+  modal.show();
+}
+
+document.getElementById('selectAllCheckbox').addEventListener('change', function () {
+  const checkboxes = document.querySelectorAll('.row-checkbox');
+  checkboxes.forEach(cb => cb.checked = this.checked);
+  toggleDeleteSelectedBtn();
+});
+
+function toggleDeleteSelectedBtn() {
+  const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
+  const btn = document.getElementById('deleteSelectedBtn');
+  btn.classList.toggle('d-none', !anyChecked);
+}
+
+document.addEventListener('change', function (e) {
+  if (e.target.classList.contains('row-checkbox')) {
+    toggleDeleteSelectedBtn();
+  }
+});
+
+async function deleteVideoById(id) {
+  const res = await fetch(`/api/get/delete?id=${encodeURIComponent(id)}&session_id=${encodeURIComponent(session_id)}`, {
+    method: "DELETE"
+  });
+  return res.json();
+}
+
+async function deleteSelectedVideos() {
+  const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+  const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+
+  if (selectedIds.length === 0) return;
+
+  const confirm = await Swal.fire({
+    title: "Delete Selected?",
+    text: `Are you sure you want to delete ${selectedIds.length} video(s)?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete"
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  Swal.fire({ title: "Deleting...", didOpen: () => Swal.showLoading() });
+
+  let allSuccess = true;
+
+  for (let id of selectedIds) {
+    try {
+      const result = await deleteVideoById(id);
+      if (result.status !== "success") {
+        allSuccess = false;
+        console.error(`Failed to delete ID ${id}:`, result);
+      }
+    } catch (err) {
+      allSuccess = false;
+      console.error(`Error deleting ID ${id}:`, err);
+    }
+  }
+
+  Swal.close();
+
+  if (allSuccess) {
+    Swal.fire("Deleted!", "All selected videos were deleted successfully.", "success");
+  } else {
+    Swal.fire("Partial Failure", "Some videos could not be deleted. Check console for details.", "warning");
+  }
+
+  // Reload the page after deletion to refresh the video list
+  window.location.reload(); // This will reload the page
+}
+
+document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedVideos);
+
+loadVideos(currentPage);
+
+
+// Attach event listener to all delete buttons
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('deleteBtn')) {
+    const videoId = e.target.getAttribute('data-id'); // Get the data-id value
+    deleteVideo(videoId); // Call deleteVideo function with the correct ID
+  }
+});
+
+// The deleteVideo function that accepts the video ID
+async function deleteVideo(id) {
+  console.log("Delete button clicked for video ID:", id); // Debugging log
+
+  // Confirm deletion with SweetAlert
+  const confirmed = await Swal.fire({
+    title: "Confirm Delete",
+    text: `Are you sure you want to delete video ID: ${id}?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Delete"
+  });
+
+  // If not confirmed, exit the function
+  if (!confirmed.isConfirmed) return;
+
+  // Show loading indicator while deleting
+  Swal.fire({
+    title: "Deleting...",
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    // Call the delete function using deleteVideoById
+    const result = await deleteVideoById(id);
+
+    // Close loading alert
+    Swal.close();
+
+    // If deletion is successful
+    if (result.status === "success") {
+      Swal.fire("Deleted!", result.message, "success");
+      window.location.reload(); // Reload the page to update the list
+    } else {
+      // If there was an error, show an error alert
+      Swal.fire("Error", result.detail || "Delete failed", "error");
+    }
+  } catch (error) {
+    // If there's a network or server error, show an error alert
+    Swal.close();
+    Swal.fire("Error", "Network or server error", "error");
+  }
+}
+</script>
+
+
+<script>
+document.getElementById("addVideoInputBtn").addEventListener("click", function () {
+  const wrapper = document.getElementById("videoInputsWrapper");
+
+  const group = document.createElement("div");
+  group.className = "input-group mb-2";
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.name = "video";
+  input.accept = "video/*";
+  input.className = "form-control video-input";
+  input.multiple = true;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "btn btn-outline-danger";
+  removeBtn.textContent = "−";
+  removeBtn.onclick = () => group.remove();
+
+  group.appendChild(input);
+  group.appendChild(removeBtn);
+  wrapper.appendChild(group);
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Edit button click
+  document.body.addEventListener("click", async e => {
+    if (!e.target.classList.contains("editBtn")) return;
+
+    const id = e.target.dataset.id;
+    if (!id) return Swal.fire("Error", "Video ID missing!", "error");
+
+    // Loading UI
+    document.getElementById("loadingSpinner").classList.remove("d-none");
+    document.getElementById("updateForm").style.display = "none";
+
+    try {
+      const res = await fetch(`/api/get/sundarikanya?id=${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Hide spinner
+      document.getElementById("loadingSpinner").classList.add("d-none");
+
+      if (data && data.videourl) {
+        // Fill form fields
+        ["id", "uploader", "title", "description", "tag", "category"].forEach(field => {
+          const el = document.getElementById(field);
+          if (el) {
+            el.value = Array.isArray(data[field]) ? data[field].join(",") : (data[field] || "");
+          }
+        });
+
+        // Thumbnail
+        const thumbnailUrl = data.thumbnail || "";
+        document.getElementById("thumbnail_url").value = thumbnailUrl;
+        document.getElementById("thumbnailPreview").src = thumbnailUrl;
+        document.getElementById("thumbnailPreview").classList.toggle("d-none", !thumbnailUrl);
+
+                // Location
+        document.getElementById("location").value =
+            data.location || "";
+
+        // Map URL
+        document.getElementById("map_url").value =
+            data.map_url || "";
+
+        // Opening Days
+        document.getElementById("opening_days").value =
+            Array.isArray(data.opening_days)
+                ? data.opening_days.join(",")
+                : "";
+
+        // Opening / Closing Time
+        document.getElementById("opening_time").value =
+            data.opening_time || "";
+
+        document.getElementById("closing_time").value =
+            data.closing_time || "";
+
+        // Ticket Prices
+        document.getElementById("indian_ticket").value =
+            data.ticket_prices?.indian ?? 0;
+
+        document.getElementById("foreigner_ticket").value =
+            data.ticket_prices?.foreigner ?? 0;
+
+        document.getElementById("child_ticket").value =
+            data.ticket_prices?.child ?? 0;
+
+        // Best Time
+        document.getElementById("best_time_to_visit").value =
+            data.best_time_to_visit || "";
+
+        // Facilities
+        document.getElementById("facilities").value =
+            Array.isArray(data.facilities)
+                ? data.facilities.join(",")
+                : "";
+
+        // Website
+        document.getElementById("official_website").value =
+            data.official_website || "";
+
+        // ✅ Instead of clearing all video inputs, just refresh preview area
+        const videoWrapper = document.getElementById("videoPreviewWrapper");
+          videoWrapper.innerHTML = "";
+
+          if (Array.isArray(data.videourl)) {
+
+            data.videourl.forEach(url => {
+
+              const isVideo =
+                /\.(mp4|webm|ogg|mov)$/i.test(url);
+
+              if (isVideo) {
+
+                const video = document.createElement("video");
+
+                video.controls = true;
+                video.src = url;
+
+                video.className =
+                  "w-100 rounded shadow-sm mb-2";
+
+                video.style.maxHeight = "300px";
+
+                videoWrapper.appendChild(video);
+
+              } else {
+
+                const img = document.createElement("img");
+
+                img.src = url;
+
+                img.className =
+                  "img-fluid rounded shadow-sm border mb-2";
+
+                img.style.maxHeight = "300px";
+
+                img.style.objectFit = "cover";
+
+                videoWrapper.appendChild(img);
+
+              }
+
+            });
+
+          }
+
+        // ✅ Keep existing <input type="file"> selections untouched
+        // Don’t reset #videoInputsWrapper, only previews update.
+
+        // Show modal
+        document.getElementById("updateForm").style.display = "block";
+        new bootstrap.Modal(document.getElementById("updateModal")).show();
+
+      } else {
+        Swal.fire("Not Found", "Video not found", "error");
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      Swal.fire("Error", err.message, "error");
+    }
+  });
+
+  // Add more video inputs
+  document.getElementById("addVideoInputBtn").addEventListener("click", () => {
+    const inputGroup = document.createElement("div");
+    inputGroup.className = "input-group mb-2";
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.name = "image";
+    input.accept = "image/*";
+    input.className = "form-control video-input";
+    input.multiple = true;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-outline-danger";
+    removeBtn.textContent = "−";
+    removeBtn.onclick = () => inputGroup.remove();
+
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(removeBtn);
+    document.getElementById("videoInputsWrapper").appendChild(inputGroup);
+  });
+});
+</script>
+
+
+
+
+<script>
+
+
+
+
+
+
+
+const loadVideos1 = async (page = 1) => {
+  const endpoint = isSearchMode
+    ? `/api/get/search?query=${encodeURIComponent(document.getElementById('searchInput').value.trim())}&page=${page}`
+    : `/api/get/sundarikanya?page=${page}`;
+
+  try {
+    const res = await fetch(endpoint);
+    const json = await res.json();
+
+    const videos = Array.isArray(json.data) ? json.data : [];
+    totalPages = Math.ceil((json.total_results ?? json.total) / (json.limit ?? json.per_page));
+    document.getElementById('videoTable').innerHTML = '';
+    document.getElementById('pagination').innerHTML = '';
+
+    videos.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" class="row-checkbox" data-id="${v.id}"></td>
+        <td>${v.id}</td>
+        <td>${v.uploader}</td>
+        <td>${truncateText(v.title, 30)}</td>
+        <td>${truncateText(v.description, 80)}</td>
+        <td><img src="${v.thumbnail}" class="thumbnail-img"></td>
+        <td><button class="btn btn-sm btn-url" onclick="showVideoUrls('${v.videourl.join(',')}')">🔗 View</button></td>
+        <td>${v.category.join(', ')}</td>
+        <td>
+          <button class="btn btn-warning editBtn" data-id="${v.id}">Edit</button>
+          <button class="btn btn-danger deleteBtn" data-id="${v.id}">🗑️</button>
+        </td>`;
+      document.getElementById('videoTable').appendChild(tr);
+    });
+
+    renderPagination(page);
+  } catch (err) {
+    alert('Failed to load videos');
+    console.error(err);
+  }
+};
+
+const handleSearch = () => {
+  const q = document.getElementById('searchInput').value.trim();
+  isSearchMode = q.length > 0;
+  currentPage = 1;
+  loadVideos1(1);
+};
+
+const clearSearch = () => {
+  document.getElementById('searchInput').value = '';
+  isSearchMode = false;
+  currentPage = 1;
+  loadVideos1(1);
+};
+
+document.getElementById('searchBtn').addEventListener('click', handleSearch);
+document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+
+
+</script>
+<script>
+document.getElementById("updateForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData();
+  formData.append("session_id", localStorage.getItem("session_id"));
+  formData.append("id", document.getElementById("id").value);
+  formData.append("uploader", document.getElementById("uploader").value);
+  formData.append("title", document.getElementById("title").value);
+  formData.append("description", document.getElementById("description").value);
+  formData.append("tag", document.getElementById("tag").value);
+  formData.append("category", document.getElementById("category").value);
+  formData.append(
+    "location",
+    document.getElementById("location").value
+    );
+
+  formData.append(
+      "map_url",
+      document.getElementById("map_url").value
+  );
+
+  formData.append(
+      "opening_days",
+      document.getElementById("opening_days").value
+  );
+
+  formData.append(
+      "opening_time",
+      document.getElementById("opening_time").value
+  );
+
+  formData.append(
+      "closing_time",
+      document.getElementById("closing_time").value
+  );
+
+  formData.append(
+      "indian_ticket",
+      document.getElementById("indian_ticket").value
+  );
+
+  formData.append(
+      "foreigner_ticket",
+      document.getElementById("foreigner_ticket").value
+  );
+
+  formData.append(
+      "child_ticket",
+      document.getElementById("child_ticket").value
+  );
+
+  formData.append(
+      "best_time_to_visit",
+      document.getElementById("best_time_to_visit").value
+  );
+
+  formData.append(
+      "facilities",
+      document.getElementById("facilities").value
+  );
+
+  formData.append(
+      "official_website",
+      document.getElementById("official_website").value
+  );
+
+  const thumbnail = document.getElementById("thumbnail").files[0];
+  if (thumbnail) formData.append("thumbnail", thumbnail);
+
+  const videoInputs = document.querySelectorAll(".video-input");
+  for (const input of videoInputs) {
+    for (const file of input.files) {
+      formData.append("video", file);
+    }
+  }
+
+  Swal.fire({ title: "Updating...", didOpen: () => Swal.showLoading() });
+
+  const res = await fetch("/api/get/update", {
+    method: "POST",
+    body: formData,
+  });
+
+  const result = await res.json();
+  Swal.close();
+
+  if (res.ok && result.status === "success") {
+    Swal.fire("Success", "Video updated successfully", "success");
+    bootstrap.Modal.getInstance(document.getElementById("updateModal")).hide();
+  } else {
+    Swal.fire("Error", result.detail || "Update failed", "error");
+  }
+});
+</script>
+
+
+</body>
+</html>
