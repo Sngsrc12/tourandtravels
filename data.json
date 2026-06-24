@@ -2490,19 +2490,32 @@
           "NoidaHaat",
           "GreatIndiaPlace"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "309, 2nd Floor, Spice Mall, Modi Mall, Town Centre, Sector 25A, Noida, Uttar Pradesh 201307",
+        "map_url": "https://maps.app.goo.gl/MpPY44nmGQepFNdv6",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "11:30",
+        "closing_time": "21:30",
         "ticket_prices": {
-          "indian": 0.0,
-          "foreigner": 0.0,
-          "child": 0.0
+          "indian": 900.0,
+          "foreigner": 900.0,
+          "child": 900.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Parking",
+          "Washroom",
+          "water",
+          "Lift"
+        ],
+        "official_website": "https://www.thehiddenhour.com/",
         "timestamp": "2026-06-23T11:51:25.365554"
       },
       {
@@ -2889,7 +2902,9 @@
           "child": 0.0
         },
         "best_time_to_visit": "Winter Season",
-        "facilities": [],
+        "facilities": [
+          "Free Parking"
+        ],
         "official_website": "https://uttarakhandtourism.gov.in/destination/nainital",
         "timestamp": "2026-06-23T12:35:14.001888"
       },
@@ -2932,19 +2947,31 @@
           "NainiLake",
           "HillStation"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "9FR4+987, Ayarpatta, Nainital, Uttarakhand 263001",
+        "map_url": "https://maps.app.goo.gl/tDXZdXAKjexauRHa8",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "06:00",
+        "closing_time": "18:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Entry is Free but Paid Row Boat: \u20b9160 (half-round) or \u20b9210 (full-round) per boat",
+          "\u20b9300 per adult",
+          "\u20b9200 per child (two-way trip)."
+        ],
+        "official_website": "https://nainitaltourism.org.in/naini-lake-nainital",
         "timestamp": "2026-06-23T12:39:29.897449"
       },
       {
@@ -2990,19 +3017,29 @@
           "HanumanTemple",
           "HimalayanSpirituality"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Kainchi dham, Uttarakhand 263132",
+        "map_url": "https://maps.app.goo.gl/T6qUorBB2cGAeYs2A",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "06:30",
+        "closing_time": "18:30",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Paid Parking around 120rs"
+        ],
+        "official_website": "https://shreekainchimandirtrust.org/",
         "timestamp": "2026-06-23T12:41:32.930778"
       },
       {
@@ -3050,18 +3087,32 @@
           "KumaoniCulture",
           "ScenicBeauty"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Binsar, Road, gadholi, Uttarakhand 263601",
+        "map_url": "https://maps.app.goo.gl/X45JNUEvSx6vzVYA6",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "14:00",
+        "closing_time": "10:00",
         "ticket_prices": {
-          "indian": 0.0,
-          "foreigner": 0.0,
+          "indian": 40000.0,
+          "foreigner": 80000.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
+        "best_time_to_visit": "Winter Season",
+        "facilities": [
+          "Multi-day tour packages from nearby hubs (like Delhi",
+          "Haridwar",
+          "or Kathgodam) typically cost between \u20b98",
+          "000 to \u20b930",
+          "000+ per person"
+        ],
         "official_website": "",
         "timestamp": "2026-06-23T12:45:19.581216"
       },
@@ -3107,19 +3158,29 @@
           "HillStation",
           "NatureRetreat"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "The Mall, Road, Vivekananda Marg, Tallital, Nainital, Uttarakhand 263001",
+        "map_url": "https://maps.app.goo.gl/TWLTVofZHcScg3sm7",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "10:00",
+        "closing_time": "18:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime & it is Totally Free But May be 5-10 thousand expanses",
+        "facilities": [
+          "Parking & Other may not be availble"
+        ],
+        "official_website": "https://uttarakhandhillstravel.com/",
         "timestamp": "2026-06-23T12:48:35.482066"
       },
       {
@@ -3164,19 +3225,29 @@
           "BeachDestination",
           "ArabianSea"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Palghar \u092a\u093e\u0932\u0918\u0930 Maharashtra",
+        "map_url": "https://maps.app.goo.gl/vPGMEJgZYa9GxLrA9",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "06:00",
+        "closing_time": "18:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Winter Season & Raining Season Best Views of Mountains",
+        "facilities": [
+          "Parking free"
+        ],
+        "official_website": "https://palghar.gov.in/en/",
         "timestamp": "2026-06-23T12:51:39.019080"
       },
       {
@@ -3216,18 +3287,28 @@
           "Maharashtra",
           "CoastalVillage"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "5QGW+R9C, Goregaon, Mumbai, Maharashtra 400095",
+        "map_url": "https://maps.app.goo.gl/L6BUWC8HumLXi5Vh6",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "10:00",
+        "closing_time": "20:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Free parking Huge area"
+        ],
         "official_website": "",
         "timestamp": "2026-06-23T12:59:00.223537"
       },
@@ -3269,18 +3350,28 @@
           "Hillscape",
           "WesternGhats"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Manor \u092e\u0928\u094b\u0930 Maharashtra 401403",
+        "map_url": "https://maps.app.goo.gl/1ZQRBGJ1uga9vDzp9",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "06:00",
+        "closing_time": "18:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Free all"
+        ],
         "official_website": "",
         "timestamp": "2026-06-23T13:10:22.355039"
       },
@@ -3334,19 +3425,34 @@
           "HilltopTemple",
           "Pilgrimage"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Virar East, Vasai-Virar, Maharashtra 401305",
+        "map_url": "https://maps.app.goo.gl/4C8iewxCJ4uWZJtj8",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "04:00",
+        "closing_time": "20:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": " Virar is during the winter months (October to February)",
+        "facilities": [
+          "Parking",
+          "Washrroom",
+          "Lift",
+          "Water",
+          "Cafe",
+          "Food"
+        ],
+        "official_website": "https://www.pilgrimaide.com/blog/Jivdani-Mata-temple",
         "timestamp": "2026-06-23T13:17:10.605326"
       },
       {
@@ -3389,19 +3495,29 @@
           "ArtGallery",
           "CultureHub"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Forbes St, Kala Ghoda, Fort, Mumbai, Maharashtra 400001",
+        "map_url": "https://maps.app.goo.gl/wGRTpSHPj63v4DJu9",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "00:00",
+        "closing_time": "12:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Not Applicable Just Public View"
+        ],
+        "official_website": "https://kalaghodaassociation.com/",
         "timestamp": "2026-06-23T13:51:45.820466"
       },
       {
@@ -3449,19 +3565,31 @@
           "LuxuryHotel",
           "HeritageHotel"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Apollo Bandar, Colaba, Mumbai, Maharashtra 400001",
+        "map_url": "https://maps.app.goo.gl/kFz2sCroso6Hjkgt9",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "00:00",
+        "closing_time": "12:00",
         "ticket_prices": {
-          "indian": 0.0,
-          "foreigner": 0.0,
+          "indian": 31850.0,
+          "foreigner": 31850.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime The Taj Mahal Palace, Mumbai Visiting is Fee From Outside but Inside have Ticket and Permission ",
+        "facilities": [
+          "Parrking",
+          "Washrrom",
+          "Water"
+        ],
+        "official_website": "https://www.tajhotels.com/en-in/hotels/taj-mahal-palace-mumbai",
         "timestamp": "2026-06-23T13:59:37.652543"
       },
       {
@@ -3501,19 +3629,29 @@
           "HeritageChurch",
           "ColonialArchitecture"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
-        "opening_time": "",
-        "closing_time": "",
+        "location": "Anand Koliwada Rd, near Green-View Apartment, Zainy Colony, Mumbra, Thane, Maharashtra 400612",
+        "map_url": "https://maps.app.goo.gl/qWZXJcyKvotjQ2Nz6",
+        "opening_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opening_time": "06:00",
+        "closing_time": "18:00",
         "ticket_prices": {
           "indian": 0.0,
           "foreigner": 0.0,
           "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
-        "official_website": "",
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "Parrking"
+        ],
+        "official_website": "https://www.trip.com/travel-guide/attraction/bengaluru/little-flower-church-141464662/",
         "timestamp": "2026-06-23T14:09:22.789128"
       }
     ]
