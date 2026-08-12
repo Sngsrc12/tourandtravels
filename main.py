@@ -1,28 +1,59 @@
-from fastapi import FastAPI, Request, Form, status, HTTPException,File, UploadFile,Query, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse,FileResponse
-from fastapi.templating import Jinja2Templates
-import json
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional, Dict
-import os,shutil
-import uuid
-from fastapi.middleware.cors import CORSMiddleware
-import bcrypt
-from typing import Union
 import os
-from datetime import datetime, timedelta
 import uuid
-import aiofiles
+import random
 import asyncio
-from upload import *
-from fastapi import Request   # ✅ for FastAPI routes
+import aiofiles
+import bcrypt
 
-from upload import upload_to_root, upload_image  # ✅ import your helper functions
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+from typing import List, Optional
 
-app = FastAPI()
+from fastapi import FastAPI, Request, Form, HTTPException, File, UploadFile, Query
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from imagekitio import ImageKit
+
+# MongoDB storage layer (replaces data.json / accounts.json / sessions.json)
+from db import (
+    load_data,
+    get_place,
+    add_place,
+    update_place,
+    delete_place,
+    load_accounts,
+    add_account,
+    find_session,
+    create_session,
+    init_indexes,
+    close_db,
+)
+
+# Helpers from your project (keep upload.py in this folder)
+from upload import *  # noqa: F401,F403
+from upload import upload_to_root, upload_image  # noqa: F401
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await init_indexes()
+    except Exception as e:
+        print(f"WARNING: MongoDB connection issue: {e}")
+    yield
+    await close_db()
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Set up templates folder
 templates = Jinja2Templates(directory="templates")
+
+# Default page size for every list endpoint.
+PAGE_SIZE = 15
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,106 +64,50 @@ app.add_middleware(
 )
 
 
-
-
-class UpdateVideo(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    thumbnail: Optional[str] = None
-    videourl: Optional[List[str]] = None
-    tag: Optional[List[str]] = None
-    category: Optional[List[str]] = None
-
-
-DATA_FILE = "data.json"
-ACCOUNTS_FILE = "accounts.json"
-
-# Create the JSON file if it doesn't exist
-if not os.path.exists(ACCOUNTS_FILE):
-    with open(ACCOUNTS_FILE, "w") as f:
-        json.dump({"users": []}, f)
-
 class UserCreate(BaseModel):
     username: str
     password: str
 
-# Async load_accounts
-async def load_accounts():
-    async with aiofiles.open(ACCOUNTS_FILE, 'r') as f:
-        content = await f.read()
-        return json.loads(content)
-
-# Async save_accounts
-async def save_accounts(data):
-    async with aiofiles.open(ACCOUNTS_FILE, 'w') as f:
-        await f.write(json.dumps(data, indent=2))
-
-
-
-class VideoEntry(BaseModel):
-    title: str
-    description: str
-    thumbnail: str
-    videourl: List[str]  # ✅ now expecting a list always
-    tag: List[str]
-    category: List[str]
-
-class UploadData(BaseModel):
-    uploader: str
-    session_id: str
-    videos: List[VideoEntry]
 
 # -------------------
-# File helpers
+# ImageKit (thumbnail / video uploads)
 # -------------------
+IMAGEKIT_PRIVATE_KEY = os.getenv(
+    "IMAGEKIT_PRIVATE_KEY",
+    "private_29XJfeKMG0/QVEZ3irLC00wIkPw=",  # TODO: move this to .env
+)
 
-ENGAGEMENT_FILE = "engagement.json"
+imagekit = ImageKit(private_key=IMAGEKIT_PRIVATE_KEY)
 
-# Async load_data
-async def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {"data": {"data": []}}
+
+def upload_to_imagekit(file_path: str, folder: str = "uploads") -> str:
+    """Upload a file to ImageKit and return its URL."""
+    with open(file_path, "rb") as f:
+        response = imagekit.files.upload(
+            file=f,
+            file_name=os.path.basename(file_path),
+            folder=f"/{folder}",
+        )
+    return response.url
+
+
+# -------------------
+# Sessions
+# -------------------
+async def is_session_valid(session_id: str) -> bool:
+    session = await find_session(session_id)
+    if not session:
+        return False
     try:
-        async with aiofiles.open(DATA_FILE, "r") as f:
-            content = await f.read()
-            return json.loads(content)
-    except json.JSONDecodeError:
-        return {"data": {"data": []}}
+        expires_at = datetime.fromisoformat(session["expires_at"])
+    except (KeyError, ValueError, TypeError):
+        return False
+    return expires_at > datetime.utcnow()
 
 
-# Async save_data
-async def save_data(data):
-    async with aiofiles.open(DATA_FILE, "w") as f:
-        await f.write(json.dumps(data, indent=2))
-
-
-
-if not os.path.exists(ENGAGEMENT_FILE):
-    with open(ENGAGEMENT_FILE, "w") as f:
-        json.dump({}, f)
-
-
-async def load_engagement():
-    async with aiofiles.open(ENGAGEMENT_FILE, "r") as f:
-        content = await f.read()
-        return json.loads(content)
-
-
-async def save_engagement(data):
-    async with aiofiles.open(ENGAGEMENT_FILE, "w") as f:
-        await f.write(json.dumps(data, indent=2))
-
-
-@app.get("/api/load")
-async def get_data():
-    data = await load_data()
-    return data
-
-
-# Utils
-def load_json(file): return json.load(open(file))
-def save_json(file, data): json.dump(data, open(file, "w"), indent=2)
-
+# -------------------
+# Pages
+# -------------------
 @app.get("/", response_class=HTMLResponse)
 async def show_create_account(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -152,57 +127,20 @@ async def serve_home(request: Request):
 async def update_page(request: Request):
     return templates.TemplateResponse("test.html", {"request": request})
 
+
+@app.get("/delete", response_class=HTMLResponse)
+async def delete_page(request: Request):
+    return templates.TemplateResponse("delete.html", {"request": request})
+
+
+@app.get("/api/load")
+async def get_data():
+    return await load_data()
+
+
 # -------------------
-# POST API to add profile
+# File upload helpers
 # -------------------
-
-SESSIONS_FILE = "sessions.json"
-
-
-
-# Async load_sessions
-async def load_sessions():
-    try:
-        async with aiofiles.open(SESSIONS_FILE, 'r') as f:
-            content = await f.read()
-            return json.loads(content)
-    except FileNotFoundError:
-        # If file doesn't exist, initialize with empty structure
-        return {"sessions": []}
-
-# Async save_sessions
-async def save_sessions(data):
-    async with aiofiles.open(SESSIONS_FILE, 'w') as f:
-        await f.write(json.dumps(data, indent=2))
-
-# Async session validation
-async def is_session_valid(session_id: str) -> bool:
-    sessions = await load_sessions()   # ✅ await here
-    for session in sessions["sessions"]:
-        if session["session_id"] == session_id:
-            expires_at = datetime.fromisoformat(session["expires_at"])
-            if expires_at > datetime.utcnow():
-                return True
-    return False
-
-
-
-@app.get("/api/session-info")
-def session_info(session_id: str):
-    sessions = load_json("sessions.json")
-    for session in sessions["sessions"]:
-        if session["session_id"] == session_id:
-            if datetime.utcnow() < datetime.fromisoformat(session["expires_at"]):
-                return {"status": "success", "username": session["username"]}
-            break
-    return {"status": "error", "detail": "Session invalid or expired"}
-
-
-
-
-import aiofiles
-import shutil
-
 CHUNK_SIZE = 1024 * 1024  # 1MB per chunk
 
 
@@ -218,478 +156,169 @@ async def save_upload_file(upload_file: UploadFile, destination: str) -> str:
     return destination
 
 
-
-# from imagekitio import ImageKit
-
-# import base64
-# import os
-
-# imagekit = ImageKit(
-#     private_key="private_29XJfeKMG0/QVEZ3irLC00wIkPw=",
-#     public_key="public_0oRATqPOuZr2ZTLGjei5s5yUP+I=",
-#     url_endpoint="https://ik.imagekit.io/w9x7ky91w"
-# )
-
-
-# def upload_to_imagekit(file_path, folder="uploads"):
-
-#     with open(file_path, "rb") as f:
-#         file_data = base64.b64encode(
-#             f.read()
-#         ).decode()
-
-#     result = imagekit.upload_file(
-#         file=file_data,
-#         file_name=os.path.basename(file_path),
-#         options={
-#             "folder": f"/{folder}"
-#         }
-#     )
-
-#     return result.response_metadata.raw["url"]
-
-from imagekitio import ImageKit
-import os
-
-imagekit = ImageKit(
-    private_key="YOUR_PRIVATE_KEY"
-)
-
-print("FILES OBJECT:")
-print(dir(imagekit.files))
-
-# from imagekitio import ImageKit
-# from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
-
-# import base64
-# import os
-
-# imagekit = ImageKit(
-#     private_key="private_29XJfeKMG0/QVEZ3irLC00wIkPw="
-# )
-
-
-# def upload_to_imagekit(file_path, folder="uploads"):
-
-#     with open(file_path, "rb") as f:
-#         file_data = base64.b64encode(
-#             f.read()
-#         ).decode()
-
-#     result = imagekit.upload_file(
-#         file=file_data,
-#         file_name=os.path.basename(file_path),
-#         options=UploadFileRequestOptions(
-#             folder=f"/{folder}"
-#         )
-#     )
-
-#     return result.url
-
-
-from imagekitio import ImageKit
-import base64
-import os
-
-imagekit = ImageKit(
-    private_key="private_29XJfeKMG0/QVEZ3irLC00wIkPw="
-)
-
-
-import os
-
-
-def upload_to_imagekit(file_path, folder="uploads"):
-
-    with open(file_path, "rb") as f:
-
-        response = imagekit.files.upload(
-            file=f,
-            file_name=os.path.basename(file_path),
-            folder=f"/{folder}"
-        )
-
-    return response.url
-
-
-
+# -------------------
+# POST API to add a place
+# -------------------
 @app.post("/api/add/sundarikanya")
 async def add_video(
     uploader: str = Form(...),
     session_id: str = Form(...),
-
     title: str = Form(...),
     description: str = Form(...),
-
     tag: str = Form(...),
     category: str = Form(...),
-
     location: str = Form(""),
     map_url: str = Form(""),
-
     opening_days: str = Form(""),
     opening_time: str = Form(""),
     closing_time: str = Form(""),
-
     indian_ticket: float = Form(0),
     foreigner_ticket: float = Form(0),
     child_ticket: float = Form(0),
-
     best_time_to_visit: str = Form(""),
-
     facilities: str = Form(""),
-
     official_website: str = Form(""),
-
     thumbnail: UploadFile = File(...),
-
-    video: List[UploadFile] = File(...)
+    video: List[UploadFile] = File(...),
 ):
-
-    # Session Validation
+    # Session validation
     if not await is_session_valid(session_id):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid session"
-        )
+        raise HTTPException(status_code=401, detail="Invalid session")
 
-    # Load Database
+    # Load database (MongoDB) to compute the next ID
     data = await load_data()
     videos = data.get("data", {}).get("data", [])
-
-    # Next ID
     max_id = max(
-        [
-            int(v["id"])
-            for v in videos
-            if str(v.get("id", "")).isdigit()
-        ] or [0]
+        [int(v["id"]) for v in videos if str(v.get("id", "")).isdigit()] or [0]
     )
-
     next_id = max_id + 1
 
-    # --------------------------
-    # Upload Thumbnail
-    # --------------------------
-
-    temp_thumb = (
-        f"temp_thumb_"
-        f"{datetime.now().timestamp()}_"
-        f"{thumbnail.filename}"
-    )
-
-    await save_upload_file(
-        thumbnail,
-        temp_thumb
-    )
-
+    # Upload thumbnail
+    temp_thumb = f"temp_thumb_{datetime.now().timestamp()}_{thumbnail.filename}"
+    await save_upload_file(thumbnail, temp_thumb)
     try:
-
-        thumb_url = upload_to_imagekit(
-            temp_thumb,
-            folder="thumbnails"
-        )
-
+        thumb_url = upload_to_imagekit(temp_thumb, folder="thumbnails")
     finally:
+        if os.path.exists(temp_thumb):
+            os.remove(temp_thumb)
 
-        if os.path.exists(
-            temp_thumb
-        ):
-            os.remove(
-                temp_thumb
-            )
-
-    # --------------------------
-    # Upload Videos
-    # --------------------------
-
+    # Upload videos
     video_urls = []
-
     for vfile in video:
-
-        temp_vid = (
-            f"temp_video_"
-            f"{datetime.now().timestamp()}_"
-            f"{vfile.filename}"
-        )
-
-        await save_upload_file(
-            vfile,
-            temp_vid
-        )
-
+        temp_vid = f"temp_video_{datetime.now().timestamp()}_{vfile.filename}"
+        await save_upload_file(vfile, temp_vid)
         try:
-
-            uploaded_url = upload_to_imagekit(
-                temp_vid,
-                folder="videos"
-            )
-
-            video_urls.append(
-                uploaded_url
-            )
-
+            uploaded_url = upload_to_imagekit(temp_vid, folder="videos")
+            video_urls.append(uploaded_url)
         except Exception as e:
-
-            print(
-                f"Video Upload Failed: {e}"
-            )
-
+            print(f"Video Upload Failed: {e}")
         finally:
+            if os.path.exists(temp_vid):
+                os.remove(temp_vid)
 
-            if os.path.exists(
-                temp_vid
-            ):
-                os.remove(
-                    temp_vid
-                )
-
-    # --------------------------
-    # Create Record
-    # --------------------------
-
+    # Create record
     new_video = {
-
-        "id":
-            str(next_id),
-
-        "uploader":
-            uploader,
-
-        "title":
-            title,
-
-        "description":
-            description,
-
-        "thumbnail":
-            thumb_url,
-
-        "videourl":
-            video_urls,
-
-        "tag":
-            [
-                t.strip()
-                for t in tag.split(",")
-                if t.strip()
-            ],
-
-        "category":
-            [
-                c.strip()
-                for c in category.split(",")
-                if c.strip()
-            ],
-
-        "location":
-            location,
-
-        "map_url":
-            map_url,
-
-        "opening_days":
-            [
-                d.strip()
-                for d in opening_days.split(",")
-                if d.strip()
-            ],
-
-        "opening_time":
-            opening_time,
-
-        "closing_time":
-            closing_time,
-
-        "ticket_prices":
-            {
-                "indian":
-                    indian_ticket,
-
-                "foreigner":
-                    foreigner_ticket,
-
-                "child":
-                    child_ticket
-            },
-
-        "best_time_to_visit":
-            best_time_to_visit,
-
-        "facilities":
-            [
-                f.strip()
-                for f in facilities.split(",")
-                if f.strip()
-            ],
-
-        "official_website":
-            official_website,
-
-        "timestamp":
-            datetime.utcnow().isoformat()
+        "id": str(next_id),
+        "uploader": uploader,
+        "title": title,
+        "description": description,
+        "thumbnail": thumb_url,
+        "videourl": video_urls,
+        "tag": [t.strip() for t in tag.split(",") if t.strip()],
+        "category": [c.strip() for c in category.split(",") if c.strip()],
+        "location": location,
+        "map_url": map_url,
+        "opening_days": [d.strip() for d in opening_days.split(",") if d.strip()],
+        "opening_time": opening_time,
+        "closing_time": closing_time,
+        "ticket_prices": {
+            "indian": indian_ticket,
+            "foreigner": foreigner_ticket,
+            "child": child_ticket,
+        },
+        "best_time_to_visit": best_time_to_visit,
+        "facilities": [f.strip() for f in facilities.split(",") if f.strip()],
+        "official_website": official_website,
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
-    # Save Record
-    videos.append(
-        new_video
-    )
-
-    data.setdefault(
-        "data",
-        {}
-    )["data"] = videos
-
-    await save_data(
-        data
-    )
+    # Save to MongoDB
+    await add_place(new_video)
 
     return {
-
-        "status":
-            "success",
-
-        "message":
-            "Place added successfully",
-
-        "id":
-            new_video["id"],
-
-        "thumbnail_link":
-            thumb_url,
-
-        "video_links":
-            video_urls,
-
-        "data":
-            new_video
+        "status": "success",
+        "message": "Place added successfully",
+        "id": new_video["id"],
+        "thumbnail_link": thumb_url,
+        "video_links": video_urls,
+        "data": new_video,
     }
 
-# @app.post("/api/add/sundarikanya")
-# async def add_video(
-#     uploader: str = Form(...),
-#     session_id: str = Form(...),
-#     title: str = Form(...),
-#     description: str = Form(...),
-#     tag: str = Form(...),
-#     category: str = Form(...),
-#     thumbnail: UploadFile = File(...),
-#     video: List[UploadFile] = File(...)
-#     ):
-#     # 1. Session validation
-#     if not await is_session_valid(session_id):
-#         raise HTTPException(status_code=401, detail="Invalid session")
 
-#     # 2. Load database
-#     data = await load_data()
-#     videos = data.get("data", {}).get("data", [])
-
-#     # 3. Next ID
-#     max_id = max([int(v["id"]) for v in videos if str(v.get("id", "")).isdigit()] or [0])
-#     next_id = max_id + 1
-
-#     # 4. Handle thumbnail
-#     temp_thumb = f"temp_thumb_{datetime.now().timestamp()}_{thumbnail.filename}"
-#     await save_upload_file(thumbnail, temp_thumb)
-#     thumb_url = upload_image(temp_thumb)  # keep your existing image upload logic
-#     os.remove(temp_thumb)
-
-#     # 5. Handle video uploads
-#     video_urls = []
-#     for vfile in video:
-#         temp_vid = f"temp_video_{datetime.now().timestamp()}_{vfile.filename}"
-#         await save_upload_file(vfile, temp_vid)
-
-#         try:
-#             # Upload to Catbox account (private)
-#             direct_link = upload_to_root(temp_vid)
-#             video_urls.append(direct_link)
-#         except Exception as e:
-#             print(f"❌ Upload failed for {vfile.filename}: {e}")
-#             os.remove(temp_vid)
-#             continue
-
-#         os.remove(temp_vid)
-
-#     # 6. Create new entry
-#     new_video = {
-#         "id": str(next_id),
-#         "uploader": uploader,
-#         "title": title,
-#         "description": description,
-#         "thumbnail": thumb_url,
-#         "videourl": video_urls,
-#         "tag": [t.strip() for t in tag.split(",") if t.strip()],
-#         "category": [c.strip() for c in category.split(",") if c.strip()],
-#         "timestamp": datetime.utcnow().isoformat()
-#     }
-
-#     videos.append(new_video)
-#     data.setdefault("data", {})["data"] = videos
-#     await save_data(data)
-
-#     return {
-#         "status": "success",
-#         "message": "Video added",
-#         "id": new_video["id"],
-#         "video_links": video_urls,
-#         "thumbnail_link": thumb_url
-#     }
-
+# -------------------
+# Read APIs
+# -------------------
 @app.get("/api/get/latest")
-async def get_all_latest_videos():
-    # 1. Load database
+async def get_all_latest_videos(
+    page: int = Query(1, ge=1),
+    limit: int = Query(PAGE_SIZE, ge=1, le=100),
+):
     data = await load_data()
     videos = data.get("data", {}).get("data", [])
-
     if not videos:
         raise HTTPException(status_code=404, detail="No videos found")
-
-    # 2. Sort all videos by ID (numeric, descending → latest first)
     sorted_videos = sorted(videos, key=lambda v: int(v.get("id", 0)), reverse=True)
-
+    start = (page - 1) * limit
+    end = start + limit
     return {
         "status": "success",
+        "page": page,
+        "limit": limit,
         "total": len(sorted_videos),
-        "data": sorted_videos
+        "data": sorted_videos[start:end],
     }
 
 
-import random
-
 @app.get("/api/get/recommended")
-async def get_recommended():
+async def get_recommended(
+    page: int = Query(1, ge=1),
+    limit: int = Query(PAGE_SIZE, ge=1, le=100),
+):
     store = await load_data()
     all_entries = store.get("data", {}).get("data", [])
+    total = len(all_entries)
 
-    # 🎲 Pick 15–20 random entries
-    sample_size = random.randint(15, 20)
-    recommended = random.sample(all_entries, min(sample_size, len(all_entries)))
+    # Shuffle the whole list once, then paginate (15 per page by default)
+    shuffled = random.sample(all_entries, total)
+    start = (page - 1) * limit
+    end = start + limit
 
     return {
         "status": "success",
-        "total": len(recommended),
-        "data": recommended
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "data": shuffled[start:end],
     }
 
 
 @app.get("/api/get/sundarikanya")
 async def get_video_by_id(
     id: Optional[str] = Query(None),
-    page: int = Query(1, ge=1)
+    page: int = Query(1, ge=1),
 ):
     data = (await load_data())["data"]["data"]
     total = len(data)
-    
-    # ✅ Return specific video by ID
+
+    # Return specific video by ID
     if id:
-        result = next((item for item in data if item["id"] == id), None)  # no zfill
+        result = next((item for item in data if item["id"] == id), None)
         if not result:
             raise HTTPException(status_code=404, detail=f"Video with ID {id} not found.")
         return result
 
-    # ✅ Pagination logic from end
-    per_page = 40
+    # Pagination logic from the end (newest first)
+    per_page = PAGE_SIZE
     start = max(total - (page * per_page), 0)
     end = total - ((page - 1) * per_page)
     paginated_data = data[start:end]
@@ -699,9 +328,8 @@ async def get_video_by_id(
         "total": total,
         "page": page,
         "per_page": per_page,
-        "data": list(reversed(paginated_data))  # newest first
+        "data": list(reversed(paginated_data)),
     }
-
 
 
 def clean_split_list(value):
@@ -718,9 +346,9 @@ async def get_sundari_entries(
     category: Optional[str] = Query(None),
     tag: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    limit: int = Query(36, ge=1)
+    limit: int = Query(PAGE_SIZE, ge=1),
 ):
-    store = await load_data()  # ✅ Await async function
+    store = await load_data()
     all_entries = store.get("data", {}).get("data", [])
 
     filtered_entries = []
@@ -733,7 +361,6 @@ async def get_sundari_entries(
 
         if category:
             match_category = any(c.lower() == category.lower() for c in cat_list)
-
         if tag:
             match_tag = any(t.lower() == tag.lower() for t in tag_list)
 
@@ -741,8 +368,6 @@ async def get_sundari_entries(
             filtered_entries.append(entry)
 
     total = len(filtered_entries)
-
-    # ✅ Pagination
     start = (page - 1) * limit
     end = start + limit
     paginated_data = filtered_entries[start:end]
@@ -753,83 +378,17 @@ async def get_sundari_entries(
         "page": page,
         "limit": limit,
         "total": total,
-        "data": paginated_data
+        "data": paginated_data,
     }
-
-
-
-@app.post("/api/create-account")
-def create_account(user: UserCreate):
-    data = load_json(ACCOUNTS_FILE)
-    if any(u["username"] == user.username for u in data["users"]):
-        return {"status": "error", "detail": "Username already exists"}
-    hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-    data["users"].append({"username": user.username, "password": hashed})
-    save_json(ACCOUNTS_FILE, data)
-    return {"status": "success", "username": user.username}
-
-
-from datetime import datetime, timedelta
-import uuid
-
-SESSION_FILE = "sessions.json"
-
-
-# Async load_sessions
-async def load_sessions():
-    try:
-        async with aiofiles.open(SESSIONS_FILE, 'r') as f:
-            content = await f.read()
-            return json.loads(content)
-    except FileNotFoundError:
-        # If file doesn't exist, initialize with empty structure
-        return {"sessions": []}
-
-# Async save_sessions
-async def save_sessions(data):
-    async with aiofiles.open(SESSIONS_FILE, 'w') as f:
-        await f.write(json.dumps(data, indent=2))
-
-
-@app.post("/api/login")
-async def login(user: UserCreate):
-    accounts = await load_accounts()
-    for account in accounts["users"]:
-        if account["username"] == user.username:
-            if bcrypt.checkpw(user.password.encode("utf-8"), account["password"].encode("utf-8")):
-                # Generate session
-                session_id = str(uuid.uuid4())
-                expiry_time = (datetime.utcnow() + timedelta(hours=24)).isoformat()
-
-                # Store session
-                sessions = await load_sessions()
-                sessions["sessions"].append({
-                    "username": user.username,
-                    "session_id": session_id,
-                    "expires_at": expiry_time
-                })
-                await save_sessions(sessions)
-
-                return {
-                    "status": "success",
-                    "message": "Login successful",
-                    "session_id": session_id,
-                    "expires_at": expiry_time
-                }
-
-            else:
-                raise HTTPException(status_code=401, detail="Incorrect password")
-
-    raise HTTPException(status_code=404, detail="User not found")
 
 
 @app.get("/api/get/search")
 async def search_sundari_entries(
     query: str = Query(..., description="Search by keyword in title, description, tag, or category"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(36, ge=1, le=100, description="Number of items per page"),
+    limit: int = Query(PAGE_SIZE, ge=1, le=100, description="Number of items per page"),
 ):
-    data_store = await load_data()  # ✅ Use async version
+    data_store = await load_data()
     all_entries = data_store.get("data", {}).get("data", [])
 
     query_lower = query.lower()
@@ -842,14 +401,13 @@ async def search_sundari_entries(
         categories = [c.lower() for c in entry.get("category", [])]
 
         if (
-            query_lower in title or
-            query_lower in description or
-            any(query_lower in tag for tag in tags) or
-            any(query_lower in cat for cat in categories)
+            query_lower in title
+            or query_lower in description
+            or any(query_lower in tag for tag in tags)
+            or any(query_lower in cat for cat in categories)
         ):
             filtered_results.append(entry)
 
-    # ✅ Pagination logic
     total = len(filtered_results)
     start = (page - 1) * limit
     end = start + limit
@@ -861,112 +419,142 @@ async def search_sundari_entries(
         "page": page,
         "limit": limit,
         "total_results": total,
-        "data": paginated_results
+        "data": paginated_results,
     }
 
 
+# -------------------
+# Accounts
+# -------------------
+@app.post("/api/create-account")
+async def create_account(user: UserCreate):
+    accounts = await load_accounts()
+    if any(u["username"] == user.username for u in accounts["users"]):
+        return {"status": "error", "detail": "Username already exists"}
+    hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
+    await add_account({"username": user.username, "password": hashed})
+    return {"status": "success", "username": user.username}
+
+
+@app.post("/api/login")
+async def login(user: UserCreate):
+    accounts = await load_accounts()
+    for account in accounts["users"]:
+        if account["username"] == user.username:
+            if bcrypt.checkpw(user.password.encode("utf-8"), account["password"].encode("utf-8")):
+                # Generate session
+                session_id = str(uuid.uuid4())
+                expiry_time = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+                await create_session(
+                    {
+                        "username": user.username,
+                        "session_id": session_id,
+                        "expires_at": expiry_time,
+                    }
+                )
+                return {
+                    "status": "success",
+                    "message": "Login successful",
+                    "session_id": session_id,
+                    "expires_at": expiry_time,
+                }
+            else:
+                raise HTTPException(status_code=401, detail="Incorrect password")
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get("/api/session-info")
+async def session_info(session_id: str):
+    session = await find_session(session_id)
+    if session:
+        if datetime.utcnow() < datetime.fromisoformat(session["expires_at"]):
+            return {"status": "success", "username": session["username"]}
+    return {"status": "error", "detail": "Session invalid or expired"}
+
+
+@app.get("/api/check-session")
+async def check_session(session_id: str):
+    session = await find_session(session_id)
+    if not session:
+        return {"status": "invalid"}
+    if datetime.utcnow() < datetime.fromisoformat(session["expires_at"]):
+        return {"status": "valid", "username": session["username"]}
+    return {"status": "expired"}
+
+
+# -------------------
+# Update place
+# -------------------
 @app.post("/api/get/update")
 async def update_video(
     id: str = Form(...),
-
     session_id: str = Form(...),
-
     uploader: str = Form(...),
-
     title: str = Form(...),
     description: str = Form(...),
-
     tag: str = Form(...),
     category: str = Form(...),
-
     location: str = Form(""),
     map_url: str = Form(""),
-
     opening_days: str = Form(""),
     opening_time: str = Form(""),
     closing_time: str = Form(""),
-
     indian_ticket: float = Form(0),
     foreigner_ticket: float = Form(0),
     child_ticket: float = Form(0),
-
     best_time_to_visit: str = Form(""),
-
     facilities: str = Form(""),
-
     official_website: str = Form(""),
-
     thumbnail: Optional[UploadFile] = File(None),
-
-    video: Optional[List[UploadFile]] = File(None)
-    ):
-    # ✅ Check session
+    video: Optional[List[UploadFile]] = File(None),
+):
+    # Check session
     if not await is_session_valid(session_id):
         raise HTTPException(status_code=401, detail="Invalid session")
 
-    # ✅ Load DB/data
-    data = await load_data()
-    videos = data.get("data", {}).get("data", [])
-    video_obj = next((v for v in videos if v["id"] == id), None)
-
+    # Fetch the entry from MongoDB
+    video_obj = await get_place(id)
     if not video_obj:
         raise HTTPException(status_code=404, detail="Video not found")
 
-    # ✅ Update metadata
+    # Update metadata
     video_obj["uploader"] = uploader
     video_obj["title"] = title
     video_obj["description"] = description
     video_obj["tag"] = [t.strip() for t in tag.split(",") if t.strip()]
     video_obj["category"] = [c.strip() for c in category.split(",") if c.strip()]
-
     video_obj["location"] = location
-
     video_obj["map_url"] = map_url
-
-    video_obj["opening_days"] = [
-        d.strip()
-        for d in opening_days.split(",")
-        if d.strip()
-    ]
-
+    video_obj["opening_days"] = [d.strip() for d in opening_days.split(",") if d.strip()]
     video_obj["opening_time"] = opening_time
-
     video_obj["closing_time"] = closing_time
-
     video_obj["ticket_prices"] = {
         "indian": indian_ticket,
         "foreigner": foreigner_ticket,
-        "child": child_ticket
+        "child": child_ticket,
     }
-
     video_obj["best_time_to_visit"] = best_time_to_visit
-
-    video_obj["facilities"] = [
-        f.strip()
-        for f in facilities.split(",")
-        if f.strip()
-    ]
-
+    video_obj["facilities"] = [f.strip() for f in facilities.split(",") if f.strip()]
     video_obj["official_website"] = official_website
 
-    # ✅ Thumbnail update
+    # Thumbnail update
     if thumbnail:
-        temp_thumb = f"temp/thumb_{datetime.now().timestamp()}.jpg"
+        temp_thumb = f"temp_thumb_{datetime.now().timestamp()}.jpg"
         async with aiofiles.open(temp_thumb, "wb") as f:
             await f.write(await thumbnail.read())
         try:
-            # run sync upload in thread
             loop = asyncio.get_running_loop()
             uploaded_thumb = await loop.run_in_executor(None, upload_image, temp_thumb)
             video_obj["thumbnail"] = uploaded_thumb
         finally:
-            os.remove(temp_thumb)
+            if os.path.exists(temp_thumb):
+                os.remove(temp_thumb)
 
-    # ✅ Video update
+    # Video update - append new URLs instead of overwriting
     if video:
         new_video_urls = []
         for vfile in video:
-            temp_vid = f"temp/video_{datetime.now().timestamp()}_{vfile.filename}"
+            temp_vid = f"temp_video_{datetime.now().timestamp()}_{vfile.filename}"
             async with aiofiles.open(temp_vid, "wb") as f:
                 await f.write(await vfile.read())
             try:
@@ -974,55 +562,45 @@ async def update_video(
                 uploaded_vid = await loop.run_in_executor(None, upload_to_imagekit, temp_vid)
                 new_video_urls.append(uploaded_vid)
             finally:
-                os.remove(temp_vid)
+                if os.path.exists(temp_vid):
+                    os.remove(temp_vid)
 
-        # ✅ Append new URLs instead of overwriting
         existing_urls = video_obj.get("videourl", [])
         video_obj["videourl"] = existing_urls + new_video_urls
 
-    # ✅ Save changes
-    await save_data(data)
+    # Save changes to MongoDB
+    await update_place(video_obj)
 
     return {"status": "success", "message": "Video updated with fresh links"}
 
 
+# -------------------
+# Delete place
+# -------------------
 @app.delete("/api/get/delete")
 async def delete_video(id: str, session_id: str):
     if not await is_session_valid(session_id):
         raise HTTPException(status_code=401, detail="Invalid session")
 
-    data_store = await load_data()
-    all_entries = data_store.get("data", {}).get("data", [])
-
-    entry_to_delete = next((e for e in all_entries if str(e.get("id")) == str(id)), None)
+    entry_to_delete = await get_place(id)
     if not entry_to_delete:
         raise HTTPException(status_code=404, detail="Video not found")
 
-    shared_link = entry_to_delete.get("video_url")  # stored shared link
+    shared_link = entry_to_delete.get("video_url")
     if shared_link:
         try:
             dropbox_path = await get_dropbox_path_from_link(shared_link)
             await delete_from_dropbox(dropbox_path)
         except Exception as e:
-            print(f"⚠️ Dropbox delete failed: {e}")
+            print(f"Dropbox delete failed: {e}")
 
-    # Remove from local storage
-    updated_entries = [e for e in all_entries if str(e.get("id")) != str(id)]
-    data_store["data"]["data"] = updated_entries
-    await save_data(data_store)
+    # Remove from MongoDB
+    await delete_place(id)
 
     return {"status": "success", "deleted_id": id}
 
 
+if __name__ == "__main__":
+    import uvicorn
 
-
-@app.get("/api/check-session")
-def check_session(session_id: str):
-    sessions = load_sessions()
-    for session in sessions["sessions"]:
-        if session["session_id"] == session_id:
-            if datetime.utcnow() < datetime.fromisoformat(session["expires_at"]):
-                return {"status": "valid", "username": session["username"]}
-            else:
-                return {"status": "expired"}
-    return {"status": "invalid"}
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
