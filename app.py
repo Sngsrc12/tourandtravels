@@ -1,7 +1,26 @@
+"""
+Full API for the travel backend - ONE file for Vercel / Render (uvicorn app:app).
+
+This is the merged version of the old read-only app.py + the admin main.py.
+Everything reads/writes MongoDB Atlas (MyTraveldata -> Data collection) via db.py,
+so no local JSON files are needed.
+
+Vercel-safe choices:
+- Uploaded files are written to tempfile.gettempdir() (Vercel /tmp) because the
+  function filesystem is READ-ONLY except /tmp. Files are deleted right after
+  the ImageKit/ImgBB upload.
+- No `uvicorn.run()` in __main__: Vercel imports `app` directly; Render uses
+  `uvicorn app:app`.
+- All list endpoints paginate PAGE_SIZE (15) items per page.
+- Read endpoints are served from db.py's in-process cache and tagged with a
+  short Cache-Control header.
+"""
+
 import os
 import uuid
 import random
 import asyncio
+import tempfile
 import aiofiles
 import bcrypt
 
@@ -10,14 +29,14 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import FastAPI, Request, Form, HTTPException, File, UploadFile, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from imagekitio import ImageKit
 
-# MongoDB storage layer (replaces data.json / accounts.json / sessions.json)
+# MongoDB storage layer (MyTraveldata -> Data collection)
 from db import (
     load_data,
     get_place,
@@ -32,7 +51,7 @@ from db import (
     close_db,
 )
 
-# Helpers from your project (keep upload.py in this folder)
+# Helpers from upload.py (upload.py must stay in the same folder)
 from upload import *  # noqa: F401,F403
 from upload import upload_to_root, upload_image  # noqa: F401
 
@@ -44,16 +63,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"WARNING: MongoDB connection issue: {e}")
     yield
-    await close_db()
+    try:
+        await close_db()
+    except Exception:
+        pass
 
 
 app = FastAPI(lifespan=lifespan)
 
 # Set up templates folder
 templates = Jinja2Templates(directory="templates")
-
-# Default page size for every list endpoint.
-PAGE_SIZE = 15
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,6 +81,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Default page size for every list endpoint.
+PAGE_SIZE = 15
+
+# Public read responses can be cached by browsers/proxies for a short time
+# (kept in sync with the in-process cache TTL in db.py).
+CACHE_MAX_AGE = 60
+
+# Where uploaded files are staged before pushing to ImageKit/ImgBB.
+# tempfile.gettempdir() is the only writable location on Vercel serverless.
+TEMP_DIR = tempfile.gettempdir()
+
+
+def cached_json(content: dict):
+    """Return a JSON response with a short Cache-Control header (reads only)."""
+    return JSONResponse(
+        content=content,
+        headers={"Cache-Control": f"public, max-age={CACHE_MAX_AGE}"},
+    )
 
 
 class UserCreate(BaseModel):
@@ -135,11 +173,11 @@ async def delete_page(request: Request):
 
 @app.get("/api/load")
 async def get_data():
-    return await load_data()
+    return cached_json(await load_data())
 
 
 # -------------------
-# File upload helpers
+# File upload helpers (writes go to /tmp on Vercel)
 # -------------------
 CHUNK_SIZE = 1024 * 1024  # 1MB per chunk
 
@@ -154,6 +192,12 @@ async def save_upload_file(upload_file: UploadFile, destination: str) -> str:
             await out_file.write(chunk)
     await upload_file.close()
     return destination
+
+
+def temp_path(prefix: str, filename: str = "") -> str:
+    """Return a unique path inside the writable temp dir."""
+    safe_name = os.path.basename(filename or "") or "file"
+    return os.path.join(TEMP_DIR, f"{prefix}_{datetime.now().timestamp()}_{safe_name}")
 
 
 # -------------------
@@ -194,7 +238,7 @@ async def add_video(
     next_id = max_id + 1
 
     # Upload thumbnail
-    temp_thumb = f"temp_thumb_{datetime.now().timestamp()}_{thumbnail.filename}"
+    temp_thumb = temp_path("temp_thumb", thumbnail.filename)
     await save_upload_file(thumbnail, temp_thumb)
     try:
         thumb_url = upload_to_imagekit(temp_thumb, folder="thumbnails")
@@ -205,7 +249,7 @@ async def add_video(
     # Upload videos
     video_urls = []
     for vfile in video:
-        temp_vid = f"temp_video_{datetime.now().timestamp()}_{vfile.filename}"
+        temp_vid = temp_path("temp_video", vfile.filename)
         await save_upload_file(vfile, temp_vid)
         try:
             uploaded_url = upload_to_imagekit(temp_vid, folder="videos")
@@ -256,7 +300,7 @@ async def add_video(
 
 
 # -------------------
-# Read APIs
+# Read APIs (15 per page)
 # -------------------
 @app.get("/api/get/latest")
 async def get_all_latest_videos(
@@ -323,13 +367,13 @@ async def get_video_by_id(
     end = total - ((page - 1) * per_page)
     paginated_data = data[start:end]
 
-    return {
+    return cached_json({
         "status": "success",
         "total": total,
         "page": page,
         "per_page": per_page,
         "data": list(reversed(paginated_data)),
-    }
+    })
 
 
 def clean_split_list(value):
@@ -372,14 +416,14 @@ async def get_sundari_entries(
     end = start + limit
     paginated_data = filtered_entries[start:end]
 
-    return {
+    return cached_json({
         "status": "success",
         "filter": {"category": category, "tag": tag},
         "page": page,
         "limit": limit,
         "total": total,
         "data": paginated_data,
-    }
+    })
 
 
 @app.get("/api/get/search")
@@ -413,14 +457,69 @@ async def search_sundari_entries(
     end = start + limit
     paginated_results = filtered_results[start:end]
 
-    return {
+    return cached_json({
         "status": "success",
         "query": query,
         "page": page,
         "limit": limit,
         "total_results": total,
         "data": paginated_results,
-    }
+    })
+
+
+@app.get("/api/get/bestcategory")
+async def get_best_category():
+    data_store = await load_data()
+    all_entries = data_store.get("data", {}).get("data", [])
+
+    category_counter = {}
+
+    for entry in all_entries:
+        categories = entry.get("category", [])
+        for cat in categories:
+            cat_clean = cat.strip().lower()
+            if cat_clean:
+                category_counter[cat_clean] = category_counter.get(cat_clean, 0) + 1
+
+    # Sort by frequency descending
+    sorted_categories = sorted(category_counter.items(), key=lambda x: x[1], reverse=True)
+
+    best_categories = [{"category": cat, "count": count} for cat, count in sorted_categories]
+
+    return cached_json({
+        "status": "success",
+        "total_categories": len(best_categories),
+        "best_categories": best_categories,
+    })
+
+
+@app.get("/api/get/atest")
+async def get_all_latest_videos_paged(
+    page: int = Query(1, ge=1),
+    limit: int = Query(PAGE_SIZE, ge=1),
+):
+    # Load database from MongoDB
+    data = await load_data()
+    videos = data.get("data", {}).get("data", [])
+
+    if not videos:
+        raise HTTPException(status_code=404, detail="No videos found")
+
+    # Sort videos by ID (numeric, descending -> latest first)
+    sorted_videos = sorted(videos, key=lambda v: int(v.get("id", 0)), reverse=True)
+
+    # Pagination logic
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_videos = sorted_videos[start:end]
+
+    return cached_json({
+        "status": "success",
+        "page": page,
+        "limit": limit,
+        "total": len(sorted_videos),
+        "data": paginated_videos,
+    })
 
 
 # -------------------
@@ -539,7 +638,7 @@ async def update_video(
 
     # Thumbnail update
     if thumbnail:
-        temp_thumb = f"temp_thumb_{datetime.now().timestamp()}.jpg"
+        temp_thumb = temp_path("temp_thumb", thumbnail.filename)
         async with aiofiles.open(temp_thumb, "wb") as f:
             await f.write(await thumbnail.read())
         try:
@@ -554,7 +653,7 @@ async def update_video(
     if video:
         new_video_urls = []
         for vfile in video:
-            temp_vid = f"temp_video_{datetime.now().timestamp()}_{vfile.filename}"
+            temp_vid = temp_path("temp_video", vfile.filename)
             async with aiofiles.open(temp_vid, "wb") as f:
                 await f.write(await vfile.read())
             try:
@@ -598,9 +697,3 @@ async def delete_video(id: str, session_id: str):
     await delete_place(id)
 
     return {"status": "success", "deleted_id": id}
-
-
-# if __name__ == "__main__":
-#     import uvicorn
-
-#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
