@@ -25,19 +25,42 @@ from pymongo.server_api import ServerApi
 
 load_dotenv()
 
-# Connection string (MongoDB Atlas). Override via MONGODB_URI in .env if needed.
+# Connection string (MongoDB Atlas).
+#
+# We deliberately use the DIRECT (non-SRV) URI instead of mongodb+srv://:
+# the SRV form requires a DNS SRV lookup, which is slow and unreliable inside
+# serverless sandboxes (Vercel/Render), where it can exceed the function time
+# limit and cause 500/504 timeouts. The direct URI only needs plain A-record
+# lookups, which work everywhere.
+#
+# Hosts resolved from _mongodb._tcp.cluster0.zkvxset.mongodb.net:
+#   ac-a1autld-shard-00-00.zkvxset.mongodb.net:27017
+#   ac-a1autld-shard-00-01.zkvxset.mongodb.net:27017
+#   ac-a1autld-shard-00-02.zkvxset.mongodb.net:27017
+# TXT record: authSource=admin&replicaSet=atlas-mstiqq-shard-0
+#
+# Override via MONGODB_URI in .env / platform env vars if needed.
 MONGODB_URI = os.getenv(
     "MONGODB_URI",
-    "mongodb+srv://samikshatechsolutions_db_user:Mangeeta_143@cluster0.zkvxset.mongodb.net/?appName=Cluster0",
+    "mongodb://samikshatechsolutions_db_user:Mangeeta_143@"
+    "ac-a1autld-shard-00-00.zkvxset.mongodb.net:27017,"
+    "ac-a1autld-shard-00-01.zkvxset.mongodb.net:27017,"
+    "ac-a1autld-shard-00-02.zkvxset.mongodb.net:27017/"
+    "?authSource=admin&replicaSet=atlas-mstiqq-shard-0&retryWrites=true&w=majority&tls=true",
 )
 
 DB_NAME = os.getenv("MONGODB_DB_NAME", "MyTraveldata")
 
 # pymongo is a sync driver; the client connects lazily (no network call at import).
+# connect=False defers DNS/connection until the FIRST database operation, so a
+# DNS outage (e.g. VPN/office DNS that cannot resolve the Atlas SRV record) never
+# crashes app startup. Requests fail cleanly during an outage and recover
+# automatically once DNS/network is back.
 client = MongoClient(
     MONGODB_URI,
     server_api=ServerApi("1"),
     serverSelectionTimeoutMS=5000,
+    connect=False,
 )
 db = client[DB_NAME]
 
