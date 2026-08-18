@@ -330,7 +330,6 @@ IMGBB_API_KEY = "ccc2c8268236991b9eeb435d41ae4271"
 import os
 import random
 import requests
-import aiohttp
 
 # Your Catbox userhash (from your account)
 USERHASH = "89e13790c452d9ad182194fd9"
