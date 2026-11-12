@@ -9078,18 +9078,28 @@
           "Tourist Attraction",
           "Cultural Tourism"
         ],
-        "location": "",
-        "map_url": "",
-        "opening_days": [],
+        "location": "VWG5+223, Husainabad, Lucknow, Uttar Pradesh 226003",
+        "map_url": "https://maps.app.goo.gl/W1ytH1qHHqRPE6vR9",
+        "opening_days": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday."
+        ],
         "opening_time": "",
         "closing_time": "",
         "ticket_prices": {
-          "indian": 0,
-          "foreigner": 0,
-          "child": 0
+          "indian": 5.0,
+          "foreigner": 50.0,
+          "child": 0.0
         },
-        "best_time_to_visit": "",
-        "facilities": [],
+        "best_time_to_visit": "Anytime",
+        "facilities": [
+          "PARKing"
+        ],
         "official_website": "",
         "timestamp": "2026-11-12T13:15:42.979092"
       },
@@ -9118,6 +9128,125 @@
         ],
         "location": "",
         "map_url": "",
+        "opening_days": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday."
+        ],
+        "opening_time": "00:00",
+        "closing_time": "00:00",
+        "ticket_prices": {
+          "indian": 1500.0,
+          "foreigner": 1500.0,
+          "child": 0.0
+        },
+        "best_time_to_visit": "Anytime",
+        "facilities": [],
+        "official_website": "",
+        "timestamp": "2026-11-12T13:30:48.711445"
+      },
+      {
+        "id": "121",
+        "uploader": "sanjayer19",
+        "title": "Tunday Kababi Lucknow \u2013 Taste the Legendary Flavours of Awadh",
+        "description": "# \ud83c\udf62 Tunday Kababi Lucknow \u2013 Taste the Legendary Flavours of Awadh\r\n\r\n\ud83d\udccd Location: 168/6, Old Nazirabad Road, Mohan Market, Khayali Ganj, Aminabad, Lucknow, Uttar Pradesh 226018, India.\r\n\r\n\ud83d\udd50 Opening Hours: 11:00 AM \u2013 12:30 AM (Daily; timings may vary).&#x20;\r\n\r\n[image](https://www.google.com/s2/favicons?domain=https://www.google.com\\&sz=32)\r\n\r\ngoogle.com+1\r\n\r\n\r\n\r\n\ud83d\udcb0 Approximate Cost: \u20b9300\u2013\u20b9500 for two people, depending on your order.&#x20;\r\n\r\n[image](https://www.google.com/s2/favicons?domain=https://www.district.in\\&sz=32)\r\n\r\nNorth Indian Restaurant+1\r\n\r\n\r\n\r\n### Description\r\n\r\nExperience the legendary taste of Tunday Kababi, one of Lucknow's most iconic food destinations, famous for its soft and flavourful Galouti Kebabs. Established in 1905, this historic eatery celebrates the royal culinary traditions of Awadh. Enjoy delicious kebabs with paratha, aromatic biryani and traditional Mughlai dishes for an unforgettable Lucknow food experience.&#x20;\r\n\r\n[image](https://www.google.com/s2/favicons?domain=https://www.tundaykababi.com\\&sz=32)\r\n\r\ntundaykababi.com+1\r\n\r\n\r\n\r\n\ud83d\udcc5 Best Time to Visit: Late morning or afternoon to avoid heavy dinner crowds.\r\n\r\n\u23f3 Recommended Duration: 45\u201360 minutes.\r\n\r\n### \ud83c\udfaf Highlights\r\n\r\n- Famous Galouti Kebabs\r\n- Mutton and Chicken Kebabs\r\n- Ulte Tawe Ka Paratha\r\n- Mutton Biryani\r\n- Mutton Korma\r\n- Sheermal Roti\r\n- Traditional Awadhi and Mughlai cuisine\r\n- Historic food legacy dating back to 1905\r\n\r\n### \ud83c\udf7d\ufe0f Must-Try Dishes\r\n\r\n- Galouti Kebab with Paratha\r\n- Mutton Tunday Kebab\r\n- Warqi Parantha\r\n- Chicken Masala Curry\r\n- Sheermal Roti\r\n- Firni\r\n\r\nTags: Tunday Kababi, Lucknow Food, Galouti Kebab, Awadhi Cuisine, Mughlai Food, Famous Kebabs, Lucknow Street Food, Mutton Kebab, Biryani, Food Tourism, Aminabad\r\n\r\nKeywords: Tunday Kababi Lucknow, best Galouti Kebab in Lucknow, famous food in Aminabad, original Tunday Kababi history, Awadhi food restaurants, must try food in Lucknow, Lucknow famous kebab shop\r\n\r\nCategories: Restaurant, Awadhi Restaurant, Mughlai Restaurant, Kebab Shop, Non-Vegetarian Restaurant, Food Destination, Heritage Food, Tourist Attraction\r\n\r\n\ud83d\udcde Contact: +91 78978 61786\r\n\r\n\ud83c\udf10 Website: [Official Tunday Kababi Website](https://www.tundaykababi.com/?utm_source=chatgpt.com) \u00b7 [Contact & Branch Locations](https://www.tundaykababi.com/contact-us?utm_source=chatgpt.com)\r\n\r\nNote: Tunday Kababi has multiple Lucknow outlets. This listing describes the Aminabad branch.",
+        "thumbnail": "https://ik.imagekit.io/5tmuh6wyw/thumbnails/temp_thumb_1794490800.373016_IMG20260816211330_ug845msHo.jpg",
+        "videourl": [
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794490806.540025_IMG20260816211328_drKABUNsX.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794490812.225406_IMG20260816211330_FfSwJDH-IB.jpg"
+        ],
+        "tag": [
+          "Tunday Kababi",
+          "Lucknow Food",
+          "Galouti Kebab",
+          "Awadhi Cuisine",
+          "Mughlai Food",
+          "Famous Kebabs",
+          "Lucknow Street Food",
+          "Mutton Kebab",
+          "Biryani",
+          "Food Tourism",
+          "Aminabad"
+        ],
+        "category": [
+          "Restaurant",
+          "Awadhi Restaurant",
+          "Mughlai Restaurant",
+          "Kebab Shop",
+          "Non-Vegetarian Restaurant",
+          "Food Destination",
+          "Heritage Food",
+          "Tourist Attraction"
+        ],
+        "location": "168/6, Old Nazirabad Rd, Mohan Market, Khayali Ganj, Aminabad, Lucknow, Uttar Pradesh 226018",
+        "map_url": "https://maps.app.goo.gl/i2LgAG3JUZikeuL29",
+        "opening_days": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday."
+        ],
+        "opening_time": "11:00",
+        "closing_time": "23:00",
+        "ticket_prices": {
+          "indian": 0.0,
+          "foreigner": 0.0,
+          "child": 0.0
+        },
+        "best_time_to_visit": "Anytime",
+        "facilities": [],
+        "official_website": "https://www.tundaykababi.com",
+        "timestamp": "2026-11-12T13:40:18.065948"
+      },
+      {
+        "id": "122",
+        "uploader": "sanjayer19",
+        "title": "Lucknow City Railway Station \u2013 Your Gateway to the Heart of Lucknow",
+        "description": "# \ud83d\ude89 Lucknow City Railway Station \u2013 Your Gateway to the Heart of Lucknow\r\n\r\n\ud83d\udccd Location: Lucknow City Railway Station, Qaiserbagh area, Lucknow, Uttar Pradesh, India.\r\n\r\n\ud83d\udd50 Opening Hours: Open 24 hours (Railway station services and ticket counters have individual timings).\r\n\r\n\ud83c\udf9f\ufe0f Entry Fee: No general entry fee. Platform access may require a valid ticket or platform ticket.\r\n\r\n### Description\r\n\r\nDiscover Lucknow City Railway Station (LC), an important railway station serving the historic city of Lucknow. Located near the Qaiserbagh area, it provides convenient rail connectivity for local passengers and visitors exploring the city's famous heritage sites, markets and cultural attractions.\r\n\r\n\ud83d\udcc5 Best Time to Visit: Throughout the year, depending on your train schedule.\r\n\r\n\u23f3 Recommended Duration: 15\u201330 minutes for a station visit.\r\n\r\n### \ud83c\udfaf Highlights\r\n\r\n- Railway connectivity within Lucknow and nearby regions\r\n- Convenient access to Qaiserbagh\r\n- Passenger waiting facilities\r\n- Ticket booking facilities\r\n- Railway platforms and train services\r\n- Access to local transport\r\n- Nearby markets and heritage attractions\r\n\r\nTags: Lucknow City Station, Lucknow Railway Station, Indian Railways, Railway Travel, Qaiserbagh, Lucknow Transport, Train Journey, Uttar Pradesh Tourism\r\n\r\nKeywords: Lucknow City Railway Station, Lucknow City station code LC, trains from Lucknow City, railway station near Qaiserbagh, Lucknow train connectivity, railway facilities in Lucknow\r\n\r\nCategories: Railway Station, Transportation, Public Transport, Travel Destination, Transit Point, Tourist Facility\r\n\r\nNote: Lucknow City (LC) is different from Lucknow Charbagh (LKO/LJN). Check your train ticket carefully to confirm the correct station.",
+        "thumbnail": "https://ik.imagekit.io/5tmuh6wyw/thumbnails/temp_thumb_1794492205.220215_IMG20260814153517_fJP9B7uncR.jpg",
+        "videourl": [
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492212.632082_IMG20260814135608_vvu_YMyBn.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492218.714256_IMG20260814135610_c7Du4Wbgci.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492224.962434_IMG20260814135639_wsbavIfE-.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492236.025501_IMG20260814135642_JrE0KOqfp.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492246.604786_IMG20260814135706_i1yoXsz8o.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492256.088801_IMG20260814135708_mTeOIPqnZ.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492267.826349_IMG20260814135715_RWVbkn_--.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492278.615058_IMG20260814135736_ahzsPWBkq.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492298.93996_IMG20260814150936_5Gn6lvYnyO.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492310.129793_IMG20260814150938_srU1RVKJz.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492321.009254_IMG20260814150941_2nYx7s8ukp.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492330.170696_IMG20260814150942_essBrHx64.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492339.591268_IMG20260814150946_rdU-i0rl9.jpg",
+          "https://ik.imagekit.io/5tmuh6wyw/videos/temp_video_1794492348.890707_IMG20260814150950_KlgrQJmtH.jpg"
+        ],
+        "tag": [
+          "Lucknow City Station",
+          "Lucknow Railway Station",
+          "Indian Railways",
+          "Railway Travel",
+          "Qaiserbagh",
+          "Lucknow Transport",
+          "Train Journey",
+          "Uttar Pradesh Tourism"
+        ],
+        "category": [
+          "Railway Station",
+          "Transportation",
+          "Public Transport",
+          "Travel Destination",
+          "Transit Point",
+          "Tourist Facility"
+        ],
+        "location": "",
+        "map_url": "",
         "opening_days": [],
         "opening_time": "",
         "closing_time": "",
@@ -9129,7 +9258,7 @@
         "best_time_to_visit": "",
         "facilities": [],
         "official_website": "",
-        "timestamp": "2026-11-12T13:30:48.711445"
+        "timestamp": "2026-11-12T14:06:00.211069"
       }
     ]
   }
